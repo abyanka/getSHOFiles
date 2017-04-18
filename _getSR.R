@@ -4,6 +4,7 @@
 rm(list = ls())
 library(data.table)
 library(zoo)
+library(lubridate)
 #try(setwd("/Users/lawtz/Dropbox/quantopian"))
 try(setwd("C:/Users/tzuohann/Dropbox/quantopian"))
 
@@ -12,7 +13,7 @@ updateData  = TRUE
 #How many days back to calculating short interest trade surprise
 dayWin      = 15
 #Number of calendar days back to output susir information
-outputDays  = 20*1
+outputDays  = 1
 #Number of symbols to keep per day top and bottom according to rank
 #Be careful here that 2*cutOffNum does not exceed the number of symbols per day.
 cutOffNum   = 50
@@ -63,6 +64,10 @@ dailySUSIR = rbind(do.call(rbind, sVolTail),do.call(rbind, sVolHead))
 rownames(dailySUSIR) = NULL
 colnames(dailySUSIR) = tolower(colnames(dailySUSIR))
 dailySUSIR = dailySUSIR[order(dailySUSIR$date,dailySUSIR$susir),]
-dailySUSIR$date           = format(as.Date(as.character(dailySUSIR$date), format="%Y%m%d") + 1,"%Y/%m/%d")
-dailySUSIR = dailySUSIR[difftime(Sys.Date(),dailySUSIR$date,units="days") <  outputDays,]
+dailySUSIR$date           = format(as.Date(as.character(dailySUSIR$date), format="%Y%m%d")) 
+#Update so that the latest day is the current
+while (tail(dailySUSIR$date,1) < as.Date(Sys.Date())) {
+  dailySUSIR$date = as.Date(dailySUSIR$date) + 1
+}
+dailySUSIR = dailySUSIR[difftime(Sys.Date(),dailySUSIR$date,units="days") <=  outputDays,]
 write.csv(dailySUSIR,file = "dailySUSIR.csv", row.names = FALSE)
